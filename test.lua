@@ -11,9 +11,7 @@ xrequire('camera',true)
 torch.setdefaulttensortype('torch.FloatTensor')
 
 
-widget = qtuiloader.load('gt.ui')
-window = qt.QtLuaPainter(widget.frame)
-cam = image.Camera{}
+
 
 zoom = 1
 box = 64
@@ -39,10 +37,13 @@ resultsSMR = {}
 classes = {'Object 1','Object 2','Object 3',
                    'Object 4','Object 5','Object 6'}
 
+widget = qtuiloader.load('gt.ui')
+window = qt.QtLuaPainter(widget.frame)
+cam = image.Camera{}
 --------------------------------------------------------------
 -- ui class
-local ui = {}
-
+--local ui = {}
+mouse = {}
 
 --ui.resize = true
 
@@ -51,30 +52,32 @@ widget.frame.mouseTracking = true
 qt.connect(qt.QtLuaListener(widget.frame),
             'sigMouseMove(int,int,QByteArray,QByteArray)',
             function (x,y)
-                ui.mouse = {x=x,y=y}
+                mouse = {x=x,y=y}
             end)
 
 -- issue learning request
 qt.connect(qt.QtLuaListener(widget),
             'sigMousePress(int,int,QByteArray,QByteArray,QByteArray)',
             function (...)
-                print(ui.mouse.x,ui.mouse.y)
-                if ui.mouse.x<320 and ui.mouse.y<240 then
-                    learn = {x=ui.mouse.x,y=ui.mouse.y,id=1}
+                --if ui.mouse.x<320 and ui.mouse.y<240 then
+                if mouse then
+                    learn = {x=mouse.x,y=mouse.y,id=1}
                 end
             end)
-widget.windowTitle = 'A simple test widget'
-widget:show()
+--widget.windowTitle = 'A simple test widget'
+--widget:show()
 ---------------------------------------------------------------            
 -- display function
 function display()
 	--frame = cam:forward()
+    --window:gbegin()
+    --window:showpage()
 	image.display{image = input,win = window,zoom = zoom}
 
    -- draw a rectangle when the mouse press
     for _,res in ipairs(resultsSMR) do
         local color = 'red'
-        local legend = res.class
+        local legend = 'SMR tracker'
         local w = res.w
         local h = res.h
         local x = res.lx
@@ -86,16 +89,16 @@ function display()
         window:setfont(qt.QFont{serif=false,italic=false,size=12})
         window:moveto(x*zoom,(y-2)*zoom)
         window:show('SMR tracker')
-        print(w,h,x,y)
+        --print(w,h,x,y)
     end
 
     -- draw a circle around mouse
     _mousetic_ = ((_mousetic_ or -1) + 1) % 2
-    if ui.mouse and _mousetic_ == 1 then
+    if mouse and _mousetic_ == 1 then
         local color = 'blue'
         local legend = 'learning object'
-        local x = ui.mouse.x
-        local y = ui.mouse.y
+        local x = mouse.x
+        local y = mouse.y
         local w = box
         local h = box
         window:setcolor(color)
@@ -162,18 +165,18 @@ end
 -- function process()
 function process()
     getframe()
-    
+   
     -- calculate the SMR map
     SMRProb = torch.Tensor(math.floor(input:size(1)-box)+1,math.floor(input:size(2)-box)+1):fill(0)
     if lastPatch:dim() > 0 then
         SMRtracker(lastPatch)
         value,px_nxt,py_nxt = GetMax(SMRProb)
+
         local lx = math.min(math.max(0,(px_nxt-1)+1),input:size(2)-box+1)
         local ty = math.min(math.max(0,(py_nxt-1)+1),input:size(1)-box+1)        
 
-        window =8 
-        SMRProb:narrow(2, math.max(px_nxt-window, 1), math.min(2*window, SMRProb:size(2)-px_nxt+window-1)):
-           narrow(1, math.max(py_nxt-window, 1), math.min(2*window,SMRProb:size(1)-py_nxt+window-1)):zero()
+        local window =8 -- same name with widget window 
+        SMRProb:narrow(2, math.max(px_nxt-window, 1), math.min(2*window, SMRProb:size(2)-px_nxt+window-1)):narrow(1, math.max(py_nxt-window, 1), math.min(2*window,SMRProb:size(1)-py_nxt+window-1)):zero() 
         dynamic_th = SMRProb:max()
 
         -- Dynamic thresholding
@@ -188,10 +191,10 @@ function process()
               threshold = 1.02
               disappear = 1
           end    
-       else 
+        else 
           threshold = 1.25 
-       end  
-
+        end  
+     
       -- Accept or reject the detection
       if  (value[1][1]>(threshold*dynamic_th)) or  (value[1][1]>dynamic_th+100) then
 
@@ -201,8 +204,7 @@ function process()
          end  
          lost = 0 
         
-         local nresult = {lx=lx, ty=ty, cx=lx+box/2, cy=ty+box/2, w=box, h=box,
-                    class=classes[1], id=1, source=2}                    
+         local nresult = {lx=lx, ty=ty, cx=lx+box/2, cy=ty+box/2, w=box, h=box,class=classes[1], id=1, source=2}                    
          table.insert(resultsSMR, nresult) 
       else 
            lost = 1   
@@ -225,7 +227,9 @@ function process()
             end   
         end
 
+
     end
+
 
     -- latest tracking frame
     if learn then
@@ -250,12 +254,24 @@ timer = qt.QTimer()
 timer = qt.QTimer()
 timer.interval = 10     -- 10ms
 timer.singleShot = true
-qt.connect(timer,'timeout()',function() process() display() timer:start() end)
 
--- load widget and display use timer
---widget.windowTitle = 'A simple test widget'
---widget:show()
-timer:start()
+--qt.connect(timer,'timeout()',function() process() display() timer:start() end)
+
+function main()
+    -- load widget and display use timer
+    --widget.windowTitle = 'A simple test widget'
+    widget:show()
+    local function loop()
+        process()
+        display()
+        timer:start()
+    end
+
+    qt.connect(timer,'timeout()',loop)
+    timer:start()
+end
+
+main()
 
 --[[
 while true do
