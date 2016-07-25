@@ -6,15 +6,9 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>709</width>
-    <height>504</height>
+    <width>790</width>
+    <height>688</height>
    </rect>
-  </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
   </property>
   <property name="palette">
    <palette>
@@ -80,24 +74,21 @@
     </disabled>
    </palette>
   </property>
+  <property name="cursor">
+   <cursorShape>ArrowCursor</cursorShape>
+  </property>
+  <property name="mouseTracking">
+   <bool>true</bool>
+  </property>
+  <property name="focusPolicy">
+   <enum>Qt::NoFocus</enum>
+  </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
-   <item row="0" column="0">
+   <item row="1" column="0">
     <widget class="QFrame" name="frame">
-     <property name="minimumSize">
-      <size>
-       <width>640</width>
-       <height>440</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>640</width>
-       <height>440</height>
-      </size>
-     </property>
      <property name="palette">
       <palette>
        <active>
@@ -134,18 +125,31 @@
         </colorrole>
        </disabled>
       </palette>
-  </property>
-    <property name="mouseTracking">
-        <bool>true</bool>
-    </property>
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
      </property>
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QLabel" name="label_7">
+     <property name="maximumSize">
+      <size>
+       <width>50</width>
+       <height>35</height>
+      </size>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="pixmap">
+      <pixmap>elab.gif</pixmap>
+     </property>
+     <property name="scaledContents">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
